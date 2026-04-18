@@ -136,8 +136,7 @@ lifted approach complements rather than replaces them.
 A tracing JIT with runtime profile information will outperform this
 approach on code where profile genuinely matters: polymorphic call
 sites, type-specialized numeric code, adaptive inlining based on
-observed targets. Claim parity with JITs on cold code and
-statically-visible code, not universal superiority.
+observed targets.
 
 ### Inlining budgets push back at scale
 
