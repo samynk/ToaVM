@@ -262,6 +262,3 @@ between host and guest. For workloads that fit the quadrant, the
 combination of properties is unavailable elsewhere. For workloads
 that don't, a JIT or interpreter remains the right tool and can
 coexist with this approach in a hybrid system.
-
-The honest pitch is "new point in the design space," not "strictly
-better than existing options."
