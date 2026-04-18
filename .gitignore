@@ -39,3 +39,7 @@
 
 # debug information files
 *.dwo
+
+# build directory
+lifter/out
+.vs
