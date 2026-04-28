@@ -136,8 +136,7 @@ lifted approach complements rather than replaces them.
 A tracing JIT with runtime profile information will outperform this
 approach on code where profile genuinely matters: polymorphic call
 sites, type-specialized numeric code, adaptive inlining based on
-observed targets. Claim parity with JITs on cold code and
-statically-visible code, not universal superiority.
+observed targets.
 
 ### Inlining budgets push back at scale
 
@@ -263,6 +262,3 @@ between host and guest. For workloads that fit the quadrant, the
 combination of properties is unavailable elsewhere. For workloads
 that don't, a JIT or interpreter remains the right tool and can
 coexist with this approach in a hybrid system.
-
-The honest pitch is "new point in the design space," not "strictly
-better than existing options."
