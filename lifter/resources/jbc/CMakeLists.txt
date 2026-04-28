@@ -15,7 +15,11 @@ foreach(JAVA_SRC ${JAVA_SOURCES})
     list(APPEND CLASS_FILES ${CLASS_FILE})
 endforeach()
 
-add_custom_target(jbc_resources ALL DEPENDS ${CLASS_FILES})
+add_custom_target(jbc_resources ALL 
+    SOURCES ${JAVA_SOURCES}
+    DEPENDS ${CLASS_FILES}
+    COMMENT "Building java class files"
+)
 
 # Make the directory containing .class files discoverable by tests
 set(JBC_RESOURCES_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE INTERNAL "")

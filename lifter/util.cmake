@@ -1,0 +1,5 @@
+function(ConfigureJBCProject ProjectName PROJECT_FOLDER )
+    target_link_libraries(${ProjectName} PUBLIC jbc)
+    add_dependencies(${ProjectName} jbc_resources)
+    set_target_properties(${ProjectName} PROPERTIES FOLDER ${PROJECT_FOLDER})
+endfunction()

@@ -5,12 +5,22 @@ project(lifter
     DESCRIPTION "Bytecode lifter via C++26 reflection"
     LANGUAGES CXX
 )
+include(util.cmake)
 
-add_library(lifter INTERFACE)
-add_library(lifter::lifter ALIAS lifter)
 
-target_include_directories(lifter INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-)
+# Set the C++ Standard to 23
+set(CMAKE_CXX_STANDARD 23)
+
+# Ensure the standard is required (build fails if compiler is too old)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Disable compiler-specific extensions (enforces "pure" C++23)
+# Set to ON if you need specific GNU or MSVC extras
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+add_subdirectory(resources/jbc)
+add_subdirectory(libs/jbc)
+
+
 
 add_subdirectory(src)

@@ -1,8 +1,5 @@
-add_executable(lifter_main
+set(LifterMain "lifter_main")
+add_executable(${LifterMain}
     main.cpp
 )
-
-target_link_libraries(lifter_main
-    PRIVATE
-        lifter::lifter
-)
+ConfigureJBCProject(${LifterMain} "JBC ClassFiles")
