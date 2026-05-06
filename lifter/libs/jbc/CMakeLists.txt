@@ -1,18 +1,16 @@
-add_library(jbc INTERFACE)
+add_library(jbc STATIC
+    "include/jbc/Opcodes.hpp"
+    "include/jbc/ClassFile.hpp"
+    "include/jbc/ClassReader.hpp"
+    "src/jbc/interpreter.cpp"
+    "src/jbc/ClassFile.cpp"
+)
 
 message("Creating jbc library")
 
 target_include_directories(jbc
-    INTERFACE
+    PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-
-target_sources(jbc INTERFACE 
-    FILE_SET HEADERS
-    BASE_DIRS "include" FILES
-     "include/jbc/Opcodes.hpp")
-
-
-
-set_target_properties(jbc PROPERTIES FOLDER "libs")
+set_target_properties(jbc PROPERTIES FOLDER "libs/jbc")

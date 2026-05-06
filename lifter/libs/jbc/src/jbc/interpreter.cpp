@@ -1,0 +1,5 @@
+namespace jbc {
+	class Interpreter {
+
+	};
+}
