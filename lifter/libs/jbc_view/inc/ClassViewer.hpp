@@ -313,6 +313,18 @@ std::string format_operands(
 	}
 }
 
+ButtonOption ButtonStyle() {
+	auto option = ButtonOption::Animated();
+	option.transform = [](const EntryState& s) {
+		auto element = text(s.label);
+		if (s.focused) {
+			element |= bold;
+		}
+		return element | center | borderEmpty | flex;
+		};
+	return option;
+}
+
 Element render_bytecode_panel(const jbc::ClassFile& file, int currentMethod)
 {
 	std::vector<Elements> rows;
@@ -344,26 +356,61 @@ Element render_bytecode_panel(const jbc::ClassFile& file, int currentMethod)
 	byteCodeTable.SelectRow(1).DecorateCells(inverted);
 	return window(
 		text(info.name),
-		byteCodeTable.Render()
+		vbox({
+		byteCodeTable.Render() })
 	);
 }
 
-Element render_details_panel()
+Element render_details_panel(const jbc::ClassFile& file, int currentMethod)
 {
-	return window(
-		text(" Selected Instruction "),
-		vbox({
-			label_value("pc:          ", "0004"),
-			label_value("opcode:      ", "iload_2"),
-			separator(),
-			text("Stack effect") | bold,
-			text("before: [... ]"),
-			text("after:  [..., int ]"),
-			separator(),
-			text("Meaning") | bold,
-			text("Push local variable 2 onto the operand stack."),
-			})
-			);
+	jbc::MethodInfo info = file.getMethodInfo(currentMethod);
+	std::vector<Elements> rows;
+	rows.push_back(
+		{
+			text("#") | bold | size(WIDTH, EQUAL, 4),
+			text("value") | bold | size(WIDTH, EQUAL, 18)
+		}
+	);
+	for (int i = 0; i < info.maxLocals; ++i)
+	{
+		auto cell = i == 0 ? text("this") | color(Color::Red) : text("");
+		rows.push_back(
+			{
+				text(std::to_string(i)) | color(Color::Aquamarine1) | size(WIDTH, EQUAL, 4),
+				cell | size(WIDTH, EQUAL, 18)
+			}
+		);
+	}
+
+	Table localVariables{ rows };
+
+	std::vector<Elements> stackRows;
+	stackRows.push_back(
+		{
+			text("#") | bold | size(WIDTH, EQUAL, 4),
+			text("value") | bold | size(WIDTH, EQUAL, 18)
+		}
+	);
+	for (int i = 0; i < info.maxStack; ++i)
+	{
+		stackRows.push_back(
+			{
+				text(std::to_string(i)) | color(Color::DeepPink1) | size(WIDTH, EQUAL, 4),
+				text("") | size(WIDTH, EQUAL, 18)
+			}
+		);
+	}
+	Table stack{ stackRows };
+	return vbox(
+		window(
+			text(" Local variables "),
+			localVariables.Render()
+		),
+		window(
+			text(" Stack "),
+			stack.Render()
+		)
+	);
 }
 
 Element render_class_viewer(const jbc::ClassFile& file, int currentMethod)
@@ -389,7 +436,7 @@ Element render_class_viewer(const jbc::ClassFile& file, int currentMethod)
 			render_methods( file, currentMethod),
 			hbox({
 				render_bytecode_panel( file, currentMethod ) | flex,
-				render_details_panel() | flex,
+				render_details_panel(file, currentMethod) | flex,
 			}) | flex,
 			}) | flex;
 

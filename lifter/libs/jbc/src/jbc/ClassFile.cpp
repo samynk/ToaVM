@@ -168,6 +168,13 @@ namespace jbc
         return attribute;
     }
 
+    uint16_t read_uint(const std::vector<uint8_t>& bytes,int& offset)
+    {
+        uint16_t result = ((uint16_t)bytes[offset] << 8) | bytes[offset+1];
+        offset += 2;
+        return result;
+    }
+
     MethodInfo read_method(ClassReader& reader, const ClassFile& file)
     {
         MethodInfo method;
@@ -199,13 +206,6 @@ namespace jbc
             AttributeInfo attribute = read_attribute(reader, file);
             if (attribute.name == "Code")
             {
-                std::cout << "Code found\n";
-                /*code.maxStack = reader.read_u2();
-                code.maxLocals = reader.read_u2();
-
-                const auto codeLength = reader.read_u4();
-                const auto codeBytes = reader.read_bytes(codeLength);*/
-
                 const auto codeBytes = attribute.info;
                 method.maxStack = ((uint16_t)codeBytes[0] << 8) | codeBytes[1];
                 method.maxLocals = ((uint16_t)codeBytes[2] << 8) | codeBytes[3];
@@ -215,10 +215,25 @@ namespace jbc
                     | codeBytes[6] << 8
                     | codeBytes[7]
                     );
-                //method.bytecode.resize(method.codeSize);
+                
                 auto start = codeBytes.begin() + 8;
                 auto end = start + method.codeSize;
                 method.bytecode.assign(start,end);
+
+                int offset = method.codeSize + 8;
+                uint16_t numExceptions = read_uint(codeBytes, offset);
+                std::cout << "nr of exceptions " << numExceptions << "\n";
+                for (int exi = 0; exi < numExceptions; ++exi)
+                {
+                    uint16_t start_pc = read_uint(codeBytes, offset);
+                    uint16_t end_pc = read_uint(codeBytes, offset);
+                    uint16_t handler_pc = read_uint(codeBytes, offset);
+                    uint16_t catch_type = read_uint(codeBytes,offset);
+                }
+                uint16_t numAttributes = read_uint(codeBytes, offset);
+                std::cout << "nr of attributes " << numAttributes << "\n";
+
+
             }
             else {
                 method.attributes.push_back(attribute);

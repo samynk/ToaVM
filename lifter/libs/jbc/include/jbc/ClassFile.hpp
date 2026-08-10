@@ -54,6 +54,20 @@ namespace jbc
         std::vector<std::uint8_t> info;
     };
 
+    struct LocalVariableInfo
+    {
+        uint16_t startPc{};
+        uint16_t length{};
+        uint16_t slot{};
+        std::string name;
+        std::string descriptor;
+
+        bool isVisibleAt(uint16_t pc) const
+        {
+            return pc >= startPc && pc < startPc + length;
+        }
+    };
+
     struct MethodInfo
     {
         std::uint16_t accessFlags{};
@@ -69,6 +83,8 @@ namespace jbc
         std::uint16_t maxStack;
         std::uint16_t maxLocals;
         std::uint32_t codeSize;
+
+        std::vector<LocalVariableInfo> localVariables;
     };
 
     struct ClassFile

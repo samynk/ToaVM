@@ -9,7 +9,7 @@ foreach(JAVA_SRC ${JAVA_SOURCES})
     set(CLASS_FILE "${JBC_RES_DIR}/${BASENAME}.class")
     add_custom_command(
         OUTPUT ${CLASS_FILE}
-        COMMAND ${JAVAC} -d ${JBC_RES_DIR} ${JAVA_SRC}
+        COMMAND ${JAVAC} -g -d ${JBC_RES_DIR} ${JAVA_SRC}
         DEPENDS ${JAVA_SRC}
     )
     list(APPEND CLASS_FILES ${CLASS_FILE})
