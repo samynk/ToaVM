@@ -25,7 +25,7 @@ include(util.cmake)
 
 
 # Set the C++ Standard to 23
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 
 # Ensure the standard is required (build fails if compiler is too old)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
