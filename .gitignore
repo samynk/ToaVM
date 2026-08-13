@@ -42,4 +42,5 @@
 
 # build directory
 lifter/out
+lifter/build
 .vs
