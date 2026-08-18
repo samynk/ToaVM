@@ -34,6 +34,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Set to ON if you need specific GNU or MSVC extras
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 
 add_subdirectory(resources/jbc)
