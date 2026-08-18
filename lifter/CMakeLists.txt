@@ -7,6 +7,17 @@ project(lifter
 )
 
 include(FetchContent)
+
+FetchContent_Declare(
+    angelscript
+    GIT_REPOSITORY https://github.com/anjo76/angelscript.git
+    GIT_TAG        v2.38.0
+    GIT_SHALLOW    TRUE
+    SOURCE_SUBDIR  sdk/angelscript/projects/cmake
+)
+
+FetchContent_MakeAvailable(angelscript)
+
 FetchContent_Declare(
     ftxui
     GIT_REPOSITORY https://github.com/ArthurSonzogni/FTXUI.git
