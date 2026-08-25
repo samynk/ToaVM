@@ -47,9 +47,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-
+# Java bytecode directories
 add_subdirectory(resources/jbc)
 add_subdirectory(libs/jbc)
 add_subdirectory(libs/jbc_view)
 
 add_subdirectory(demos/read_class_file/src)
+
+# AngelScript projects
+# output folders for jbc targets
+set(AS_RUNTIME_DIR "${CMAKE_BINARY_DIR}/as_runtime")
+set(AS_BIN_DIR     "${AS_RUNTIME_DIR}")
+set(AS_RES_DIR     "${AS_RUNTIME_DIR}/resources")
+
+add_subdirectory(libs/angelscript)
+add_subdirectory(tools/angelscript/ascompiler)
+
+add_subdirectory(resources/as)
+add_subdirectory(demos/angelscript/read_asbc)
+add_subdirectory(demos/angelscript/01_SimpleFunction)
