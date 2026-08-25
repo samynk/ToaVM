@@ -1,6 +1,6 @@
 #include <angelscript.h>
 
-#include "host_api.hpp"
+#include "asbc/host_api.hpp"
 
 #include <cstdlib>
 #include <filesystem>
