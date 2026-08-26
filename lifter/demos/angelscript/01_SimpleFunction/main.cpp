@@ -14,16 +14,15 @@
 constexpr std::int32_t square(std::int32_t value)
 {
     using namespace asbc;
-    Frame frame;
+    using FrameType = Frame<std::int32_t>;
+    FrameType frame(value);
 
-    // AngelScript variable slot 0 contains the parameter.
-    frame.variables[0] = value;
-
-    block<
-        execute<asBC_SUSPEND>,
-        execute<asBC_MULi, 1, 0, 0>,
-        execute<asBC_CpyVtoR4, 1>,
-        execute<asBC_RET, 1>
+    asbc::block<
+        FrameType,
+        execute<FrameType,asBC_SUSPEND>,
+        execute<FrameType,asBC_MULi, 1, 0, 0>,
+        execute<FrameType,asBC_CpyVtoR4, 1>,
+        execute<FrameType,asBC_RET, 1>
     >(frame);
 
     return std::bit_cast<std::int32_t>(

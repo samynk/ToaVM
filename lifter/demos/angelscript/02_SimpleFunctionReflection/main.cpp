@@ -3,6 +3,7 @@
 
 #include "asbc/decode.hpp"
 #include "asbc/transform.hpp"
+#include "asbc/function.hpp"
 
 // int square(int)
 inline constexpr std::array<std::uint32_t, 5> square_bytecode_0{
@@ -15,11 +16,11 @@ inline constexpr std::array<std::uint32_t, 5> square_bytecode_0{
 
 constexpr std::int32_t generatedSquare(std::int32_t value)
 {
-    asbc::Frame frame;
-    frame.variables[0] = value;
+    using FrameType = asbc::Frame<std::int32_t>;
+    FrameType frame(value);
 
     constexpr std::meta::info program =
-        asbc::createBlockInfo<square_bytecode_0>();
+        asbc::createBlockInfo<FrameType, square_bytecode_0>();
 
     [:program:](frame);
 
@@ -34,6 +35,10 @@ static_assert(generatedSquare(-8) == 64);
 
 int main()
 {
+    constexpr auto pFnSquare = asbc::invoke<square_bytecode_0, std::int32_t, std::int32_t>;
+    constexpr int result = pFnSquare(13);
+    static_assert(result == 169);
+
     constexpr auto offsets =
         std::define_static_array(
             asbc::createInstructionOffsets<
