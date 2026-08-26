@@ -9,7 +9,7 @@
 
 namespace asbc {
 
-template<auto const& Program>
+template<typename FrameType, const auto& Program>
 consteval std::meta::info createBlockInfo()
 {
     using namespace std::meta;
@@ -21,8 +21,8 @@ consteval std::meta::info createBlockInfo()
         );
 
     std::vector<std::meta::info> steps;
-    steps.reserve(offsets.size());
-
+    steps.reserve(offsets.size()+1);
+    steps.push_back(^^FrameType);
     template for (constexpr std::size_t offset : offsets) {
         constexpr asEBCInstr opcode =
             decodeOpcode(Program[offset]);
@@ -34,6 +34,7 @@ consteval std::meta::info createBlockInfo()
             substitute(
                 ^^execute,
                 {
+                    ^^FrameType,
                     reflect_constant(opcode),
                     reflect_constant(operands.arg0),
                     reflect_constant(operands.arg1),

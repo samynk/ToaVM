@@ -2,8 +2,8 @@
 #include "asbc/frame.hpp"
 
 namespace asbc {
-    template<auto... Steps>
-    constexpr void block(Frame& frame)
+    template<typename FrameType ,auto... Steps>
+    constexpr void block(FrameType& frame)
     {
         (Steps(frame), ...);
     }

@@ -1,14 +1,16 @@
 #pragma once
 #include <asbc/frame.hpp>
+#include <tuple>
 
 namespace asbc{
     template<
+        typename FrameType,
         asEBCInstr Op,
         std::int32_t Arg0 = 0,
         std::int32_t Arg1 = 0,
         std::int32_t Arg2 = 0
     >
-    constexpr void execute(Frame& frame)
+    constexpr void execute(FrameType& frame)
     {
         if constexpr (Op == asBC_SUSPEND) {
             // AngelScript uses this for line callbacks and suspension.
@@ -23,9 +25,10 @@ namespace asbc{
 
             constexpr auto right =
                 static_cast<std::size_t>(Arg2);
-
-            frame.variables[destination] =
-                frame.variables[left] * frame.variables[right];
+            frame.template set<destination>(
+                frame.template get<left>() *
+                frame.template get<right>()
+            );
         }
         else if constexpr (Op == asBC_CpyVtoR4) {
             constexpr auto source =
@@ -33,7 +36,7 @@ namespace asbc{
 
             frame.valueRegister =
                 std::bit_cast<std::uint32_t>(
-                    frame.variables[source]
+                    frame.template get<source>()
                 );
         }
         else if constexpr (Op == asBC_RET) {
