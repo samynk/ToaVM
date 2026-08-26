@@ -130,6 +130,62 @@ void print_arguments(
     }
 }
 
+void emit_constexpr_bytecode(
+    asIScriptFunction& function,
+    std::string_view array_name,
+    std::ostream& output
+)
+{
+    static_assert(
+        sizeof(asDWORD) == sizeof(std::uint32_t),
+        "The bytecode exporter expects 32-bit AngelScript DWORDs"
+    );
+
+    asUINT length = 0;
+    const asDWORD* bytecode = function.GetByteCode(&length);
+
+    if (bytecode == nullptr) {
+        std::cerr
+            << "No bytecode available for "
+            << function.GetDeclaration()
+            << '\n';
+
+        return;
+    }
+
+    const auto old_flags = output.flags();
+    const auto old_fill = output.fill();
+
+    output
+        << "// " << function.GetDeclaration() << '\n'
+        << "inline constexpr std::array<std::uint32_t, "
+        << length << "> "
+        << array_name
+        << "{\n";
+
+    for (asUINT index = 0; index < length; ++index) {
+        output
+            << "    0x"
+            << std::hex
+            << std::uppercase
+            << std::setw(8)
+            << std::setfill('0')
+            << static_cast<std::uint32_t>(bytecode[index])
+            << "u";
+
+        if (index + 1 != length) {
+            output << ',';
+        }
+
+        output << '\n';
+    }
+
+    output << "};\n\n";
+
+    output.flags(old_flags);
+    output.fill(old_fill);
+}
+
 int main(int argc, char** argv)
 { 
     asIScriptEngine* engine = asCreateScriptEngine();
@@ -163,7 +219,7 @@ int main(int argc, char** argv)
             const asUINT instruction_size = asBCTypeSize[info.type];
 
             std::cout << pc
-                    << ": " << info.name;
+                    << ": " << info.name << "[ " << instruction_size << " DWORDs ]";
             print_arguments(instruction, info.type);
             std::cout << '\n';
             // std::cout << " [" << instruction_size << " DWORDs]\n";
@@ -171,6 +227,7 @@ int main(int argc, char** argv)
             instruction += instruction_size;
             pc += instruction_size;
         }
+        emit_constexpr_bytecode(*func, "bytecode_" + std::to_string(i), std::cout);
     }
 
 }
