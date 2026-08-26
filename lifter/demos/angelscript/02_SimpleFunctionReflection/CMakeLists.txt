@@ -1,0 +1,2 @@
+add_executable(SimpleFunctionReflection main.cpp)
+configureASReflectionProject(SimpleFunctionReflection "demos/asbc/01_SimpleFunction")
