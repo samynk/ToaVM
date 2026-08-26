@@ -1,4 +1,5 @@
 add_library(asbc STATIC
+    "include/asbc/frame.hpp"
     "include/asbc/Opcodes.hpp"
     "include/asbc/host_api.hpp"
     "src/host_api.cpp"
