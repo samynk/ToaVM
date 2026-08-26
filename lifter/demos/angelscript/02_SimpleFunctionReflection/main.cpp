@@ -16,7 +16,7 @@ inline constexpr std::array<std::uint32_t, 5> square_bytecode_0{
 
 constexpr std::int32_t generatedSquare(std::int32_t value)
 {
-    using FrameType = asbc::Frame<std::int32_t>;
+    using FrameType = asbc::Frame<std::int32_t, std::int32_t>;
     FrameType frame(value);
 
     constexpr std::meta::info program =

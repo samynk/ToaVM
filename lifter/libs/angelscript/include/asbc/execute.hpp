@@ -3,12 +3,22 @@
 #include <tuple>
 
 namespace asbc{
+    template<typename ValueType,
+        int16_t dest, int16_t left, int16_t right,
+        typename FrameType, typename Operation>
+    constexpr void binaryOperation(
+        FrameType& frame,
+        Operation operation)
+    {
+        
+    }
+
     template<
         typename FrameType,
         asEBCInstr Op,
-        std::int32_t Arg0 = 0,
-        std::int32_t Arg1 = 0,
-        std::int32_t Arg2 = 0
+        std::int16_t arg0 = 0,
+        std::int16_t arg1 = 0,
+        std::int16_t arg2 = 0
     >
     constexpr void execute(FrameType& frame)
     {
@@ -17,31 +27,33 @@ namespace asbc{
             // The first AOT implementation does not support suspension.
         }
         else if constexpr (Op == asBC_MULi) {
-            constexpr auto destination =
-                static_cast<std::size_t>(Arg0);
-
-            constexpr auto left =
-                static_cast<std::size_t>(Arg1);
-
-            constexpr auto right =
-                static_cast<std::size_t>(Arg2);
-            frame.template set<destination>(
-                frame.template get<left>() *
-                frame.template get<right>()
+            frame.template set<arg0>(
+                frame.template get<int32_t,arg1>() * frame.template get<int32_t,arg2>()
+            );
+        }else if constexpr (Op == asBC_ADDi) {
+            frame.template set<arg0>(
+                frame.template get<int32_t,arg1>() + frame.template get<int32_t,arg2>()
+            );
+        }else if constexpr (Op == asBC_MULf) {
+            frame.template set<arg0>(
+                frame.template get<float,arg1>() * frame.template get<float,arg2>()
+            );
+        }else if constexpr (Op == asBC_ADDf) {
+            frame.template set<arg0>(
+                frame.template get<float,arg1>() + frame.template get<float,arg2>()
             );
         }
         else if constexpr (Op == asBC_CpyVtoR4) {
             constexpr auto source =
-                static_cast<std::size_t>(Arg0);
+                static_cast<std::size_t>(arg0);
 
-            frame.valueRegister =
-                std::bit_cast<std::uint32_t>(
-                    frame.template get<source>()
-                );
+            frame.setReturnValue(
+                frame.template get<std::uint32_t, source>()
+            );
         }
         else if constexpr (Op == asBC_RET) {
             frame.argumentWordsToPop =
-                static_cast<std::uint16_t>(Arg0);
+                static_cast<std::uint16_t>(arg0);
 
             frame.running = false;
         }
@@ -49,6 +61,9 @@ namespace asbc{
             static_assert(
                 Op == asBC_SUSPEND ||
                 Op == asBC_MULi ||
+                Op == asBC_ADDi ||
+                Op == asBC_MULf ||
+                Op == asBC_ADDf ||
                 Op == asBC_CpyVtoR4 ||
                 Op == asBC_RET,
                 "AngelScript opcode has not been implemented"

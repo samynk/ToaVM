@@ -11,9 +11,9 @@
 namespace asbc {
 
     struct Operands {
-        std::uint16_t arg0{};
-        std::uint16_t arg1{};
-        std::uint16_t arg2{};
+        std::int16_t arg0{};
+        std::int16_t arg1{};
+        std::int16_t arg2{};
     };
 
     constexpr asEBCInstr decodeOpcode(std::uint32_t word)
@@ -61,6 +61,9 @@ namespace asbc {
             return 1;
 
         case asBC_MULi:
+        case asBC_ADDi:
+        case asBC_MULf:
+        case asBC_ADDf:
             return 2;
 
         default:
@@ -78,22 +81,26 @@ namespace asbc {
         case asBC_SUSPEND:{
             return {};
         }
-        case asBC_MULi:{
+        case asBC_MULi:
+        case asBC_ADDi:
+        case asBC_MULf:
+        case asBC_ADDf:
+        {
             
             return {
-                .arg0 = unsignedHighWord(Program[pc]),
-                .arg1 = unsignedLowWord(Program[pc + 1]),
-                .arg2 = unsignedHighWord(Program[pc + 1])
+                .arg0 = signedHighWord(Program[pc]),
+                .arg1 = signedLowWord(Program[pc + 1]),
+                .arg2 = signedHighWord(Program[pc + 1])
             };
         }
         case asBC_CpyVtoR4:{
             return {
-                .arg0 = unsignedHighWord(Program[pc])
+                .arg0 = signedHighWord(Program[pc])
             };
         }
         case asBC_RET:{
             return {
-                .arg0 = unsignedHighWord(Program[pc])
+                .arg0 = signedHighWord(Program[pc])
             };
         }
         default:{

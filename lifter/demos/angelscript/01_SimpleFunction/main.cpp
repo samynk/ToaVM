@@ -14,7 +14,7 @@
 constexpr std::int32_t square(std::int32_t value)
 {
     using namespace asbc;
-    using FrameType = Frame<std::int32_t>;
+    using FrameType = Frame<std::int32_t,std::int32_t>;
     FrameType frame(value);
 
     asbc::block<

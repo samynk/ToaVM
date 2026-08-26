@@ -4,12 +4,12 @@
 namespace asbc{
     template<
         auto const& Bytecode,
-        typename Return,
+        typename ReturnType,
         typename... Parameters
     >
-    constexpr Return invoke(Parameters... parameters)
+    constexpr ReturnType invoke(Parameters... parameters)
     {
-        using FrameType = Frame<Parameters...>;
+        using FrameType = Frame<ReturnType,Parameters...>;
         FrameType frame{parameters...};
 
         constexpr std::meta::info program =
@@ -20,8 +20,8 @@ namespace asbc{
 
         [:program:](frame);
 
-        if constexpr (!std::same_as<Return, void>) {
-            return std::bit_cast<Return>(
+        if constexpr (!std::same_as<ReturnType, void>) {
+            return std::bit_cast<ReturnType>(
                 frame.valueRegister
             );
         }

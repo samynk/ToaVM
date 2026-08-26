@@ -1,0 +1,2 @@
+add_executable(AdvancedFunction main.cpp)
+configureASReflectionProject(AdvancedFunction "demos/asbc/03_AdvancedFunction")
