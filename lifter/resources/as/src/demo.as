@@ -3,9 +3,14 @@ int square(int value)
     return value * value;
 }
 
-float hypotenuse(float a, float b)
+float squarehypotenuse(float a, float b)
 {
     return a*a + b*b;
+}
+
+float hypotenuse(float a, float b)
+{
+    return sqrt(a*a + b*b);
 }
 
 int run_demo()
