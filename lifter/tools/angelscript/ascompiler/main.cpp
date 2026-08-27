@@ -71,6 +71,29 @@ void print_usage(const char* executable)
               << " <output.asbc> <input.as> [additional-input.as ...]\n";
 }
 
+void print_host_api(const asIScriptEngine& engine)
+{
+    std::cout << "Registered host functions:\n";
+
+    for (asUINT index = 0; index < engine.GetGlobalFunctionCount(); ++index) {
+        const asIScriptFunction* function =
+            engine.GetGlobalFunctionByIndex(index);
+
+        if (function == nullptr) {
+            continue;
+        }
+
+        std::cout
+            << "  " << function->GetId()
+            << ": "
+            << function->GetDeclaration(
+                   true,  // include object name
+                   true,  // include namespace
+                   true)  // include parameter names
+            << '\n';
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv)
@@ -98,7 +121,7 @@ int main(int argc, char** argv)
         std::cerr << "Could not configure the AngelScript engine\n";
         return finish(EXIT_FAILURE);
     }
-
+    print_host_api(*engine);
     try {
         asIScriptModule* module = engine->GetModule("compiled_module", asGM_ALWAYS_CREATE);
 
