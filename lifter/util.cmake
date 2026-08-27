@@ -102,4 +102,7 @@ function(ConfigureASReflectionProject ProjectName PROJECT_FOLDER)
             PDB_OUTPUT_DIRECTORY
                 "${AS_BIN_DIR}"
     )
+    target_compile_options(${ProjectName} PRIVATE
+        "$<$<COMPILE_LANG_AND_ID:CXX,GNU>:--embed-dir=${AS_RES_DIR}>"
+    )
 endfunction()
