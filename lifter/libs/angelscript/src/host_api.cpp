@@ -3,19 +3,18 @@
 #include <angelscript.h>
 
 #include <iostream>
+#include <cmath>
 
-namespace {
 
 void print(int value)
 {
     std::cout << "AngelScript says: " << value << '\n';
 }
 
-} // namespace
-
 bool register_host_api(asIScriptEngine& engine)
 {
+    engine.RegisterGlobalFunction("float sqrt(float)", asFUNCTION(std::sqrtf), asCALL_CDECL);
     return engine.RegisterGlobalFunction(
                "void print(int)", asFUNCTION(print), asCALL_CDECL) >= 0;
+    
 }
-
