@@ -130,6 +130,34 @@ void print_arguments(
     }
 }
 
+void print_instruction_annotation(
+    asIScriptEngine& engine,
+    asEBCInstr opcode,
+    const asDWORD* instruction)
+{
+    if (opcode != asBC_CALLSYS) {
+        return;
+    }
+
+    const int function_id =
+        static_cast<int>(asBC_DWORDARG(instruction));
+
+    const asIScriptFunction* called_function =
+        engine.GetFunctionById(function_id);
+
+    if (called_function == nullptr) {
+        std::cout << " <unresolved host function>";
+        return;
+    }
+
+    std::cout
+        << " -> "
+        << called_function->GetDeclaration(
+               true,  // include object name
+               true,  // include namespace
+               true); // include parameter names
+}
+
 void emit_constexpr_bytecode(
     asIScriptFunction& function,
     std::string_view array_name,
@@ -221,6 +249,7 @@ int main(int argc, char** argv)
             std::cout << pc
                     << ": " << info.name << "[ " << instruction_size << " DWORDs ]";
             print_arguments(instruction, info.type);
+            print_instruction_annotation(*engine, opcode, instruction);
             std::cout << '\n';
             // std::cout << " [" << instruction_size << " DWORDs]\n";
 
