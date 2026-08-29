@@ -5,8 +5,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <span>
+#include <limits>
+#include <iterator>
+
 
 #include <iomanip>
+#include "format/byte_reader.hpp"
 
 namespace asbc {
 
@@ -131,4 +136,19 @@ namespace asbc {
 
         return offsets;
     }
-}
+
+ 
+
+
+
+    
+
+    
+
+ 
+
+   
+
+    
+
+} // namespace asbc

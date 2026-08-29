@@ -1,0 +1,2 @@
+add_executable(ParseByteCode main.cpp)
+configureASReflectionProject(ParseByteCode "demos/asbc/04_ParseBytecodeConsteval")
