@@ -1,7 +1,7 @@
 #include <meta>
 #include <iostream>
 
-#include "asbc/decode.hpp"
+#include "asbc/instruction.hpp"
 #include "asbc/transform.hpp"
 #include "asbc/function.hpp"
 #include <asbc/format/module_reader.hpp>

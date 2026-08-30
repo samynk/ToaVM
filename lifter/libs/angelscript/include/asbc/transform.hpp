@@ -1,7 +1,7 @@
 #pragma once
 
 #include "asbc/block.hpp"
-#include "asbc/decode.hpp"
+#include "asbc/instruction.hpp"
 #include "asbc/execute.hpp"
 
 #include <meta>
