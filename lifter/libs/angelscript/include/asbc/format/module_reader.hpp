@@ -1,3 +1,5 @@
+#pragma once
+
 #include "decoding_context.hpp"
 
 namespace asbc::format {
@@ -14,13 +16,16 @@ namespace asbc::format {
         function_prefix first_function;
     };
 
-    template<std::size_t Size>
-    [[nodiscard]] consteval simple_module_info inspect_simple_module(
-        const unsigned char (&bytes)[Size])
+    struct simple_module_header {
+        bool debug_info_stripped;
+        std::uint64_t function_count;
+        std::size_t function_records_offset;
+    };
+
+    template<class Context>
+    [[nodiscard]] constexpr simple_module_header read_simple_module_header(
+        Context& context)
     {
-        decoding_context<Size> context{
-        std::span<const unsigned char>{bytes, Size}
-        };
         auto& reader = context.reader();
 
         const bool debug_info_stripped =
@@ -60,7 +65,25 @@ namespace asbc::format {
             throw "AngelScript module contains no script functions";
         }
 
-        const std::size_t first_function_offset = reader.position();
+        return {
+            .debug_info_stripped = debug_info_stripped,
+            .function_count = function_count,
+            .function_records_offset = reader.position(),
+        };
+    }
+
+    template<std::size_t Size>
+    [[nodiscard]] consteval simple_module_info inspect_simple_module(
+        const unsigned char (&bytes)[Size])
+    {
+        decoding_context<Size> context{
+            std::span<const unsigned char>{bytes, Size}
+        };
+        const auto header = read_simple_module_header(context);
+        auto& reader = context.reader();
+
+        const std::size_t first_function_offset =
+            header.function_records_offset;
 
         const std::uint8_t function_tag = reader.read_byte();
 
@@ -76,8 +99,8 @@ namespace asbc::format {
             context.read_string();
 
         return {
-            .debug_info_stripped = debug_info_stripped,
-            .function_count = function_count,
+            .debug_info_stripped = header.debug_info_stripped,
+            .function_count = header.function_count,
             .function_records_offset = first_function_offset,
             .first_function = {
                 .record_offset = first_function_offset,

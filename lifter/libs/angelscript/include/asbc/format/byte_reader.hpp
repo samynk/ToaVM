@@ -1,4 +1,10 @@
 #pragma once
+
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <span>
+
 namespace asbc::format {
     struct byte_string_view {
         const unsigned char* data = nullptr;
@@ -33,7 +39,6 @@ namespace asbc::format {
             return true;
         }
     };
-
 
     class byte_reader {
     public:
@@ -131,7 +136,7 @@ namespace asbc::format {
             return static_cast<std::uint64_t>(value);
         }
 
-        [[nodiscard]] constexpr byte_string_view read_bytes( std::size_t count)
+        [[nodiscard]] constexpr byte_string_view read_bytes(std::size_t count)
         {
             if (count > bytes_.size() - position_) {
                 throw "Unexpected end of AngelScript bytecode";
