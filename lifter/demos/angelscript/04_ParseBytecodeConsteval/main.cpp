@@ -19,12 +19,20 @@ inline constexpr auto demo_module =
     asbc::format::inspect_simple_module(demo_asbc);
 
 static_assert(!demo_module.debug_info_stripped);
-static_assert(demo_module.function_count == 4);
+static_assert(demo_module.function_count == 3);
 
 static_assert(demo_module.first_function.name.size != 0);
 
- inline constexpr auto mulByteCode =
+
+inline constexpr auto mulByteCode =
     asbc::format::readFirstFunctionByteCode<demo_asbc>();
+
+inline constexpr auto functions =
+    asbc::format::readFunctions<demo_asbc>();
+
+constexpr auto const& hypo = std::get<1>(functions);
+static_assert(hypo.name.equals("squarehypotenuse"));
+
 
 int main()
 {
@@ -35,8 +43,12 @@ int main()
     }
     std::cout << "\n";
 
-    int result = asbc::invoke<mulByteCode,std::int32_t,std::int32_t>(5);
-    std::cout << "Result : " << result << "\n";
+    int result1 = asbc::invoke<mulByteCode,std::int32_t,std::int32_t>(5);
+    std::cout << "Result : " << result1 << "\n";
+
+    float result2 = asbc::invoke< asbc::format::decodedFunctionByteCode<demo_asbc, 1>,
+        float,float,float>(3.2f,4.1f);
+    std::cout << "Result : " << result2 << "\n";
 
     return 0;
 }
