@@ -57,11 +57,15 @@ namespace asbc {
         );
     }
 
+    
+
     constexpr std::size_t instructionSize(asEBCInstr opcode)
     {
         switch (opcode) {
         case asBC_SUSPEND:
         case asBC_CpyVtoR4:
+        case asBC_CpyRtoV4:
+        case asBC_PshV4:
         case asBC_RET:
             return 1;
 
@@ -69,6 +73,7 @@ namespace asbc {
         case asBC_ADDi:
         case asBC_MULf:
         case asBC_ADDf:
+        case asBC_CALLSYS:
             return 2;
 
         default:

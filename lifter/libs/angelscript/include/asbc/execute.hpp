@@ -65,7 +65,10 @@ namespace asbc{
                 Op == asBC_MULf ||
                 Op == asBC_ADDf ||
                 Op == asBC_CpyVtoR4 ||
-                Op == asBC_RET,
+                Op == asBC_CpyRtoV4 ||
+                Op == asBC_RET ||
+                Op == asBC_PshV4 ||
+                Op == asBC_CALLSYS,
                 "AngelScript opcode has not been implemented"
             );
         }

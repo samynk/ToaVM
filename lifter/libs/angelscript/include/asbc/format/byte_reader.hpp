@@ -136,6 +136,18 @@ namespace asbc::format {
             return static_cast<std::uint64_t>(value);
         }
 
+        [[nodiscard]] constexpr std::int32_t readEncodedDWord()
+        {
+            const auto value = read_encoded_int64();
+
+            if (value < std::numeric_limits<std::int32_t>::min() ||
+                value > std::numeric_limits<std::int32_t>::max()) {
+                throw "AngelScript DWORD operand is out of range";
+            }
+
+            return static_cast<std::int32_t>(value);
+        }
+
         [[nodiscard]] constexpr byte_string_view read_bytes(std::size_t count)
         {
             if (count > bytes_.size() - position_) {

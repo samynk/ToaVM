@@ -152,6 +152,19 @@ namespace asbc::format {
         return static_cast<std::int16_t>(value);
     }
 
+    constexpr void storeDWordOperand(
+        Operands& operands,
+        std::int32_t value)
+    {
+        const auto bits = std::bit_cast<std::uint32_t>(value);
+
+        operands.arg1 = std::bit_cast<std::int16_t>(
+            static_cast<std::uint16_t>(bits));
+
+        operands.arg2 = std::bit_cast<std::int16_t>(
+            static_cast<std::uint16_t>(bits >> 16u));
+    }
+
     struct serialized_instruction {
         asEBCInstr opcode{};
         Operands operands{};
@@ -337,6 +350,12 @@ namespace asbc::format {
                 case asBC_RET:
                     instruction.operands.arg0 =
                         readEncodedWord(reader);
+                    break;
+                case asBC_CALLSYS:
+                    storeDWordOperand(
+                        instruction.operands,
+                        reader.readEncodedDWord()
+                    );
                     break;
 
                 case asBC_MULi:
