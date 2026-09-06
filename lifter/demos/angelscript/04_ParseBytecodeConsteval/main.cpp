@@ -4,6 +4,7 @@
 #include "asbc/instruction.hpp"
 #include "asbc/transform.hpp"
 #include "asbc/function.hpp"
+#include "asbc/host_api.hpp"
 #include <asbc/format/module_reader.hpp>
 #include <asbc/format/function_reader.hpp>
 
@@ -33,7 +34,6 @@ inline constexpr auto functions =
 constexpr auto const& hypo = std::get<1>(functions);
 static_assert(hypo.name.equals("squarehypotenuse"));
 
-
 int main()
 {
     std::cout << "First function :" ;
@@ -43,10 +43,10 @@ int main()
     }
     std::cout << "\n";
 
-    int result1 = asbc::invoke<mulByteCode,std::int32_t,std::int32_t>(5);
+    int result1 = asbc::invoke<asbc::standalone_environment, mulByteCode,std::int32_t,std::int32_t>(5);
     std::cout << "Result : " << result1 << "\n";
 
-    float result2 = asbc::invoke< asbc::format::decodedFunctionByteCode<demo_asbc, 1>,
+    float result2 = asbc::invoke<asbc::standalone_environment, asbc::format::decodedFunctionByteCode<demo_asbc, 1>,
         float,float,float>(3.2f,4.1f);
     std::cout << "Result : " << result2 << "\n";
 

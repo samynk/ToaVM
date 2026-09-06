@@ -4,6 +4,7 @@
 #include "asbc/instruction.hpp"
 #include "asbc/transform.hpp"
 #include "asbc/function.hpp"
+#include "asbc/host_api.hpp"
 
 // int square(int)
 inline constexpr std::array<std::uint32_t, 5> square_bytecode_0{
@@ -16,7 +17,7 @@ inline constexpr std::array<std::uint32_t, 5> square_bytecode_0{
 
 constexpr std::int32_t generatedSquare(std::int32_t value)
 {
-    using FrameType = asbc::Frame<std::int32_t, std::int32_t>;
+    using FrameType = asbc::Frame<asbc::standalone_environment, std::int32_t, std::int32_t>;
     FrameType frame(value);
 
     constexpr std::meta::info program =
@@ -33,9 +34,10 @@ static_assert(generatedSquare(0) == 0);
 static_assert(generatedSquare(7) == 49);
 static_assert(generatedSquare(-8) == 64);
 
+
 int main()
 {
-    constexpr auto pFnSquare = asbc::invoke<square_bytecode_0, std::int32_t, std::int32_t>;
+    constexpr auto pFnSquare = asbc::invoke<asbc::standalone_environment, square_bytecode_0, std::int32_t, std::int32_t>;
     constexpr int result = pFnSquare(13);
     static_assert(result == 169);
 

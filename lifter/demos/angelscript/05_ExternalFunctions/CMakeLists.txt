@@ -1,0 +1,2 @@
+add_executable(ExternalFunctions main.cpp)
+configureASReflectionProject(ExternalFunctions "demos/asbc/05_ExternalFunctions")

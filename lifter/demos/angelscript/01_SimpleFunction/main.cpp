@@ -8,13 +8,22 @@
 #include "asbc/frame.hpp"
 #include "asbc/execute.hpp"
 #include "asbc/block.hpp"
+#include "asbc/host_api.hpp"
 
+float host_sqrt(float value)
+{
+    return std::sqrt(value);
+}
 
+void print(float value)
+{
+    std::cout << value << '\n';
+}
 
 constexpr std::int32_t square(std::int32_t value)
 {
     using namespace asbc;
-    using FrameType = Frame<std::int32_t,std::int32_t>;
+    using FrameType = Frame<asbc::standalone_environment,std::int32_t,std::int32_t>;
     FrameType frame(value);
 
     asbc::block<

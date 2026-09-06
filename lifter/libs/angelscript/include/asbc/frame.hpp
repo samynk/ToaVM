@@ -3,28 +3,55 @@
 #include <cstdint>
 #include <tuple>
 namespace asbc{
-    template<typename ReturnType,typename... Parameters>
+    using dword = std::uint32_t;
+    using index = std::int16_t;
+
+    template<auto const& Module, typename HostApi>
+    struct execution_environment {
+        static constexpr auto const& module = Module;
+        using host_api_type = HostApi;
+    };
+
+    struct no_host_api {};
+
+    struct standalone_environment {
+        using host_api_type = no_host_api;
+        static constexpr bool has_module_metadata = false;
+    };
+
+    template<typename ExecEnv, typename ReturnType,typename... Parameters>
     struct Frame {
+        using environment_type = ExecEnv;
+        using host_api_type = typename ExecEnv::host_api_type;
         static constexpr std::size_t parameterCount = sizeof...(Parameters);
+
         constexpr explicit Frame(Parameters... parameters)
         : variables(parameters...)
         {
 
         }
+        
+
         // Parameters
         std::tuple<Parameters...> variables{};
         // additional locals needed by the function
-        std::array<std::int32_t, 256> locals{};
+        std::array<dword, 256> locals{};
 
         // Four-byte view of AngelScript's value register.
-        ReturnType valueRegister{};
+        dword valueRegister{};
 
         // RET metadata. It will matter once we implement nested calls.
-        std::uint16_t argumentWordsToPop{};
+        index argumentWordsToPop{};
 
         bool running{true};
+        static constexpr index operandStackCapacity = 256;
 
-        template<typename ValueType,std::int16_t Index>
+        std::array<dword, operandStackCapacity> operandStack{};
+        index stackPointer = operandStackCapacity;
+
+
+
+        template<typename ValueType,index Index>
         constexpr decltype(auto) get()
         {
             if constexpr (Index > 0) {
@@ -34,19 +61,65 @@ namespace asbc{
             }
         }
 
-        template<std::int16_t Index, typename Value>
+        template<index Index, typename Value>
         constexpr void set(Value&& value)
         {
             if constexpr (Index > 0) {
-                std::int32_t localValue = std::bit_cast<std::int32_t>(std::forward<Value>(value));
+                dword localValue = std::bit_cast<dword>(std::forward<Value>(value));
                 locals[Index - 1] = localValue;
             } else {
                 std::get<-Index>(variables) = std::forward<Value>(value);
             }
         }
 
-        constexpr void setReturnValue(uint32_t value) {
-            valueRegister = std::bit_cast<ReturnType>(value);
+        constexpr void setReturnValue(dword value) {
+            valueRegister = value;
+        }
+
+        constexpr ReturnType getReturnValue() const {
+            return std::bit_cast<ReturnType>(valueRegister);
+        
+        }
+        // Stack implementation
+
+        constexpr void pushDWord(dword value)
+        {
+            if (stackPointer == 0) {
+                throw "AngelScript operand stack overflow";
+            }
+
+            operandStack[--stackPointer] = value;
+        }
+
+        constexpr dword popDWord()
+        {
+            if (stackPointer == operandStackCapacity) {
+                throw "AngelScript operand stack underflow";
+            }
+
+            return operandStack[stackPointer++];
+        }
+
+        constexpr dword stackWord(index offset = 0) const
+        {
+            if (stackPointer + offset >= operandStackCapacity) {
+                throw "Invalid AngelScript stack access";
+            }
+
+            return operandStack[stackPointer + offset];
+        }
+
+        constexpr index stackSize() const
+        {
+            return operandStackCapacity - stackPointer;
+        }
+
+        constexpr void discardStackWords(index count)
+        {
+            if (count > stackSize()) {
+                throw "AngelScript operand stack underflow";
+            }
+            stackPointer += count;
         }
     };
 }

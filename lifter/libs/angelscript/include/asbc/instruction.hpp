@@ -103,11 +103,22 @@ namespace asbc {
                 .arg2 = signedHighWord(Program[pc + 1])
             };
         }
-        case asBC_CpyVtoR4:{
+        case asBC_CpyVtoR4:
+        case asBC_CpyRtoV4:
+        case asBC_PshV4:
+        {
             return {
                 .arg0 = signedHighWord(Program[pc])
             };
         }
+        case asBC_CALLSYS:
+        {
+            // function id is in dword
+            return {
+                .arg0 = unsignedLowWord(Program[pc + 1]),
+                .arg1 = unsignedHighWord(Program[pc + 1])
+            };
+        }        
         case asBC_RET:{
             return {
                 .arg0 = signedHighWord(Program[pc])
@@ -141,19 +152,4 @@ namespace asbc {
 
         return offsets;
     }
-
- 
-
-
-
-    
-
-    
-
- 
-
-   
-
-    
-
 } // namespace asbc

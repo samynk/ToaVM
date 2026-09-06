@@ -70,6 +70,19 @@ namespace asbc::format {
         std::array<std::uint32_t, WordCount> byte_code{};
     };
 
+    enum class used_function_origin : std::uint8_t {
+        application = 'a',
+        module      = 'm',
+        shared      = 's',
+        null        = 'n'
+    };
+
+    struct simple_used_function {
+        std::size_t index{};
+        used_function_origin origin{};
+        simple_function_signature signature{};
+    };
+
     // AngelScript keeps its string and data-type caches alive for the whole
     // serialized module. This context must therefore be shared by all function
     // records rather than restarted at each function offset.
@@ -347,6 +360,8 @@ namespace asbc::format {
                     break;
 
                 case asBC_CpyVtoR4:
+                case asBC_CpyRtoV4:
+                case asBC_PshV4:
                 case asBC_RET:
                     instruction.operands.arg0 =
                         readEncodedWord(reader);
@@ -357,6 +372,7 @@ namespace asbc::format {
                         reader.readEncodedDWord()
                     );
                     break;
+                    
 
                 case asBC_MULi:
                 case asBC_ADDi:

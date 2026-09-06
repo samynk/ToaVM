@@ -1,18 +1,10 @@
 #pragma once
 #include <asbc/frame.hpp>
+#include <asbc/host_api.hpp>
 #include <tuple>
+#include <math.h>
 
 namespace asbc{
-    template<typename ValueType,
-        int16_t dest, int16_t left, int16_t right,
-        typename FrameType, typename Operation>
-    constexpr void binaryOperation(
-        FrameType& frame,
-        Operation operation)
-    {
-        
-    }
-
     template<
         typename FrameType,
         asEBCInstr Op,
@@ -39,16 +31,34 @@ namespace asbc{
                 frame.template get<float,arg1>() * frame.template get<float,arg2>()
             );
         }else if constexpr (Op == asBC_ADDf) {
-            frame.template set<arg0>(
-                frame.template get<float,arg1>() + frame.template get<float,arg2>()
-            );
+            frame.template set<arg0>(frame.template get<float,arg1>() + frame.template get<float,arg2>());
         }
         else if constexpr (Op == asBC_CpyVtoR4) {
-            constexpr auto source =
-                static_cast<std::size_t>(arg0);
-
             frame.setReturnValue(
-                frame.template get<std::uint32_t, source>()
+                frame.template get<dword, arg0>()
+            );
+        }else if constexpr (Op == asBC_CpyRtoV4) {
+            frame.template set<arg0>(
+                frame.valueRegister
+            );
+        }else if constexpr (Op == asBC_PshV4) {
+            static_assert(arg0 != 0, "Argument 0 must be non-zero for asBC_PshV4");
+            frame.pushDWord(
+                frame.template get<dword, arg0>()
+            );
+        }else if constexpr (Op == asBC_CALLSYS) {
+            const float argument =
+                std::bit_cast<float>(frame.popDWord());
+
+            constexpr auto usedFunctionIndex = (arg0 << 16) + arg1;
+            
+            using HostApi = typename FrameType::host_api_type;
+            constexpr auto sqrtFunction = HostApi::template get<"sqrt">();
+            float result = sqrtFunction(argument);
+
+            //std::cout << "Result: " << result << std::endl; 
+            frame.setReturnValue(
+                std::bit_cast<dword>(result)
             );
         }
         else if constexpr (Op == asBC_RET) {
