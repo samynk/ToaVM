@@ -13,8 +13,11 @@ void print(int value)
 
 bool register_host_api(asIScriptEngine& engine)
 {
-    engine.RegisterGlobalFunction("float sqrt(float)", asFUNCTION(std::sqrtf), asCALL_CDECL);
     return engine.RegisterGlobalFunction(
-               "void print(int)", asFUNCTION(print), asCALL_CDECL) >= 0;
+               "float sqrt(float)", asFUNCTIONPR(std::sqrt, (float), float), asCALL_CDECL) >= 0 &&
+           engine.RegisterGlobalFunction(
+               "void print(int)", asFUNCTION(print), asCALL_CDECL) >= 0 &&
+            engine.RegisterGlobalFunction(
+                "float atan2(float,float)", asFUNCTION(print), asCALL_CDECL) >= 0;
     
 }

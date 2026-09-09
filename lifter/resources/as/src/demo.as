@@ -14,6 +14,11 @@ float hypotenuse(float a, float b)
     return sqrt(a*a + b*b);
 }
 
+float angle(float y, float x)
+{
+    return atan2(y,x);
+}
+
 /*
 int run_demo()
 {

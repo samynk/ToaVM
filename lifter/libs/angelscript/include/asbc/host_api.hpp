@@ -19,6 +19,8 @@ namespace asbc {
     {
         char data[N]{};
 
+        constexpr fixed_string() = default;
+
         consteval fixed_string(const char (&text)[N])
         {
             for (std::size_t i = 0; i < N; ++i)

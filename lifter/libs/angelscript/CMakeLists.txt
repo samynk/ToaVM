@@ -6,6 +6,8 @@ add_library(asbc STATIC
     "include/asbc/instruction.hpp"
     "include/asbc/Opcodes.hpp"
     "include/asbc/host_api.hpp"
+    "include/asbc/host_call.hpp"
+    "include/asbc/format/used_function_reader.hpp"
     "src/host_api.cpp"
 )
 target_link_libraries(asbc PUBLIC angelscript)

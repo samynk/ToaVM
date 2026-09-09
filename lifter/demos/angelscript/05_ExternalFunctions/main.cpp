@@ -7,20 +7,27 @@
 #include "asbc/function.hpp"
 #include <asbc/format/module_reader.hpp>
 #include <asbc/format/function_reader.hpp>
+#include <asbc/format/used_function_reader.hpp>
+
+float host_atan2(float y, float x)
+{
+    return std::atan2(y, x);
+}
 
 float host_sqrt(float value)
 {
     return std::sqrt(value);
 }
 
-void print(float value)
+void host_print(std::int32_t value)
 {
     std::cout << value << '\n';
 }
 
 using HostApi = asbc::host_api<
     asbc::bind<"sqrt", &host_sqrt>,
-    asbc::bind<"print", &print>
+    asbc::bind<"print", &host_print>,
+    asbc::bind<"atan2", &host_atan2>
 >;
 
 
@@ -49,32 +56,35 @@ inline constexpr unsigned char demo_asbc[] = {
 };
 
 inline constexpr auto demo_module =
-    asbc::format::inspect_simple_module(demo_asbc);
+    asbc::format::readSimpleModule<demo_asbc>();
 
 static_assert(!demo_module.debug_info_stripped);
-static_assert(demo_module.function_count == 3);
+static_assert(demo_module.function_count == 4);
+static_assert(std::get<0>(demo_module.used_functions).signature.name.equals("sqrt"));
 
 using Environment =
     asbc::execution_environment<demo_module, HostApi>;
 
 int main()
 {
-    //
-
-    asbc::Frame<Environment,float,float,float> f(3.2f,4.1f);
-    f.pushDWord(std::bit_cast<asbc::dword>(3.2f));
-    asbc::dword value = f.popDWord();
-    float check = std::bit_cast<float>(value);
-        std::cout << "Check: " << check << "\n";
-
-    f.setReturnValue(value);
-    float returnValue = f.getReturnValue();
-
-    std::cout << "Return Value: " << returnValue << "\n";
-
+    constexpr auto usedFunctions = asbc::format::inspectUsedFunctions<demo_asbc>();
+    for (const auto& function : usedFunctions) {
+        std::cout << "Used function " << function.index << ": ";
+        for (unsigned char c : function.signature.name) {
+            std::cout << static_cast<char>(c);
+        }
+        std::cout << '\n';
+    }
 
     float result2 = asbc::invoke<Environment, asbc::format::decodedFunctionByteCode<demo_asbc, 2>,
         float,float,float>(3.2f,4.1f);
     std::cout << "Result : " << result2 << "\n";
+
+    float angle = asbc::invoke<Environment, asbc::format::decodedFunctionByteCode<demo_asbc, 3>,
+        float,float,float>(2.87f, 3.23f);
+
+    std::cout << "Angle : " << angle << "\n";
+    std::cout << "Angle check : " << std::atan2(2.87f, 3.23f) << "\n";
+
     return 0;
 }

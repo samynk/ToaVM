@@ -1,7 +1,10 @@
 #pragma once
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <tuple>
+#include <type_traits>
+#include <utility>
 namespace asbc{
     using dword = std::uint32_t;
     using index = std::int16_t;
@@ -57,7 +60,7 @@ namespace asbc{
             if constexpr (Index > 0) {
                 return std::bit_cast<ValueType>(locals[Index - 1]);
             } else {
-                return std::get<-Index>(variables);
+                return std::bit_cast<ValueType>(std::get<-Index>(variables));
             }
         }
 
@@ -68,7 +71,8 @@ namespace asbc{
                 dword localValue = std::bit_cast<dword>(std::forward<Value>(value));
                 locals[Index - 1] = localValue;
             } else {
-                std::get<-Index>(variables) = std::forward<Value>(value);
+                using Parameter = std::remove_cvref_t<decltype(std::get<-Index>(variables))>;
+                std::get<-Index>(variables) = std::bit_cast<Parameter>(value);
             }
         }
 

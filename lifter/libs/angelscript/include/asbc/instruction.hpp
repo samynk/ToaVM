@@ -21,6 +21,12 @@ namespace asbc {
         std::int16_t arg2{};
     };
 
+    constexpr std::uint32_t joinOperandWords(std::int16_t low, std::int16_t high)
+    {
+        return static_cast<std::uint16_t>(low) |
+            (static_cast<std::uint32_t>(static_cast<std::uint16_t>(high)) << 16u);
+    }
+
     constexpr asEBCInstr decodeOpcode(std::uint32_t word)
     {
         return static_cast<asEBCInstr>(
@@ -115,8 +121,8 @@ namespace asbc {
         {
             // function id is in dword
             return {
-                .arg0 = unsignedLowWord(Program[pc + 1]),
-                .arg1 = unsignedHighWord(Program[pc + 1])
+                .arg0 = signedLowWord(Program[pc + 1]),
+                .arg1 = signedHighWord(Program[pc + 1])
             };
         }        
         case asBC_RET:{

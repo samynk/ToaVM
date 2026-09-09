@@ -1,7 +1,9 @@
 #pragma once
 
 #include "module_reader.hpp"
+#include "../instruction.hpp"
 
+#include <bit>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -45,6 +47,7 @@ namespace asbc::format {
         asbc::format::byte_string_view name_space{};
         simple_data_type return_type{};
         std::uint64_t parameter_count{};
+        std::uint64_t function_type{};
         std::uint64_t instruction_count{};
         std::size_t byte_code_word_count{};
     };
@@ -77,10 +80,12 @@ namespace asbc::format {
         null        = 'n'
     };
 
+    template<std::size_t ParameterCount>
     struct simple_used_function {
         std::size_t index{};
         used_function_origin origin{};
-        simple_function_signature signature{};
+        std::uint64_t function_type{};
+        simple_function_signature<ParameterCount> signature{};
     };
 
     // AngelScript keeps its string and data-type caches alive for the whole
@@ -121,7 +126,7 @@ namespace asbc::format {
             }
 
             // Internal AngelScript 2.38 token value for ttIdentifier.
-            constexpr std::uint64_t identifierToken = 6;
+            constexpr std::uint64_t identifierToken = 5;
 
             const auto token = byteReader.read_encoded_uint();
             if (token == identifierToken) {
@@ -202,25 +207,118 @@ namespace asbc::format {
         return static_cast<std::size_t>(count);
     }
 
+    // Shared by script records and the used-function table. Both use the
+    // module-wide string and data-type caches.
+    template<class Context, class ParameterTypeVisitor, class ParameterModifierVisitor>
+    constexpr simple_function_summary readSimpleFunctionSignature(
+        Context& context, std::size_t functionIndex, std::size_t byteCount,
+        ParameterTypeVisitor parameterTypeVisitor,
+        ParameterModifierVisitor parameterModifierVisitor)
+    {
+        auto& reader = context.reader();
+        const auto name = context.read_string();
+
+        if (name.equals("$dlgte")) {
+            throw "The delegate factory is not supported as a script function";
+        }
+
+        const auto returnType = context.read_data_type();
+        const auto parameterCount = reader.read_encoded_uint();
+        const auto checkedParameterCount = checkedCount(
+            parameterCount,
+            byteCount,
+            "AngelScript parameter count is out of range");
+
+        for (std::size_t parameterIndex = 0;
+             parameterIndex < checkedParameterCount;
+             ++parameterIndex) {
+            parameterTypeVisitor(
+                functionIndex,
+                parameterIndex,
+                context.read_data_type());
+        }
+
+        if (parameterCount != 0) {
+            const auto inOutCount = reader.read_encoded_uint();
+
+            if (inOutCount > parameterCount) {
+                throw "Invalid in/out flag count";
+            }
+
+            for (std::size_t parameterIndex = 0;
+                 parameterIndex < static_cast<std::size_t>(inOutCount);
+                 ++parameterIndex) {
+                parameterModifierVisitor(
+                    functionIndex,
+                    parameterIndex,
+                    reader.read_encoded_uint());
+            }
+        }
+
+        const auto encodedFunctionType = reader.read_encoded_uint();
+        if ((encodedFunctionType & 128u) != 0) {
+            throw "Template function signatures are not supported yet";
+        }
+        const auto functionType =
+            encodedFunctionType & ~std::uint64_t{128};
+
+        if (functionType != asFUNC_SCRIPT && functionType != asFUNC_SYSTEM) {
+            throw "Unsupported AngelScript function signature kind";
+        }
+
+        if (parameterCount != 0) {
+            const auto defaultArgumentCount =
+                reader.read_encoded_uint();
+
+            if (defaultArgumentCount > parameterCount) {
+                throw "Invalid default-argument count";
+            }
+
+            for (std::uint64_t i = 0;
+                 i < defaultArgumentCount;
+                 ++i) {
+                (void)context.read_string();
+            }
+        }
+
+        // WriteTypeInfo(nullptr): this is a global function.
+        if (reader.read_byte() != 0) {
+            throw "Methods are not supported yet";
+        }
+
+        // Global property accessors contain an extra traits byte.
+        if (startsWith(name, "get_", 4) ||
+            startsWith(name, "set_", 4)) {
+            (void)reader.read_byte();
+        }
+
+        const auto nameSpace = context.read_string();
+
+        return {
+            .index = functionIndex,
+            .name = name,
+            .name_space = nameSpace,
+            .return_type = returnType,
+            .parameter_count = parameterCount,
+            .function_type = functionType,
+        };
+    }
+
     template<
-        auto const& Asbc,
+        std::size_t byteCount,
+        class Context,
         class FunctionVisitor,
         class ParameterTypeVisitor = ignore_visit_event,
         class ParameterModifierVisitor = ignore_visit_event,
         class InstructionVisitor = ignore_visit_event>
-    constexpr void visitFunctions(
+    constexpr void visitScriptFunctions(
+        Context& context,
+        const simple_module_header& module,
         FunctionVisitor functionVisitor,
         ParameterTypeVisitor parameterTypeVisitor = {},
         ParameterModifierVisitor parameterModifierVisitor = {},
         InstructionVisitor instructionVisitor = {})
     {
-        constexpr std::size_t byteCount = std::size(Asbc);
-
-        simple_function_decoding_context<byteCount> context{
-            std::span<const unsigned char>{Asbc, byteCount}
-        };
-
-        const auto module = read_simple_module_header(context);
         auto& reader = context.reader();
 
         const auto functionCount = checkedCount(
@@ -243,96 +341,13 @@ namespace asbc::format {
                 throw "Expected a new AngelScript function record";
             }
 
-            const auto name = context.read_string();
-
-            if (name.equals("$dlgte")) {
-                throw "The delegate factory is not supported as a script function";
-            }
-
-            const auto returnType = context.read_data_type();
-            const auto parameterCount = reader.read_encoded_uint();
-            const auto checkedParameterCount = checkedCount(
-                parameterCount,
-                byteCount,
-                "AngelScript parameter count is out of range");
-
-            for (std::size_t parameterIndex = 0;
-                 parameterIndex < checkedParameterCount;
-                 ++parameterIndex) {
-                parameterTypeVisitor(
-                    functionIndex,
-                    parameterIndex,
-                    context.read_data_type());
-            }
-
-            if (parameterCount != 0) {
-                const auto inOutCount = reader.read_encoded_uint();
-
-                if (inOutCount > parameterCount) {
-                    throw "Invalid in/out flag count";
-                }
-
-                for (std::size_t parameterIndex = 0;
-                     parameterIndex < static_cast<std::size_t>(inOutCount);
-                     ++parameterIndex) {
-                    parameterModifierVisitor(
-                        functionIndex,
-                        parameterIndex,
-                        reader.read_encoded_uint());
-                }
-            }
-
-            const auto encodedFunctionType = reader.read_encoded_uint();
-            const bool isTemplateFunction =
-                (encodedFunctionType & 128u) != 0;
-            const auto functionType =
-                encodedFunctionType & ~std::uint64_t{128};
-
-            if (functionType != asFUNC_SCRIPT) {
+            const auto signature = readSimpleFunctionSignature(
+                context, functionIndex, byteCount,
+                parameterTypeVisitor, parameterModifierVisitor);
+            if (signature.function_type != asFUNC_SCRIPT) {
                 throw "Expected an AngelScript script function";
             }
-
-            if (parameterCount != 0) {
-                const auto defaultArgumentCount =
-                    reader.read_encoded_uint();
-
-                if (defaultArgumentCount > parameterCount) {
-                    throw "Invalid default-argument count";
-                }
-
-                for (std::uint64_t i = 0;
-                     i < defaultArgumentCount;
-                     ++i) {
-                    (void)context.read_string();
-                }
-            }
-
-            // WriteTypeInfo(nullptr): this is a global function.
-            if (reader.read_byte() != 0) {
-                throw "Methods are not supported yet";
-            }
-
-            // Global property accessors contain an extra traits byte.
-            if (startsWith(name, "get_", 4) ||
-                startsWith(name, "set_", 4)) {
-                (void)reader.read_byte();
-            }
-
-            const auto nameSpace = context.read_string();
-
-            if (isTemplateFunction) {
-                const auto subtypeCount = reader.read_encoded_uint();
-                const auto checkedSubtypeCount = checkedCount(
-                    subtypeCount,
-                    byteCount,
-                    "AngelScript template subtype count is out of range");
-
-                for (std::size_t i = 0;
-                     i < checkedSubtypeCount;
-                     ++i) {
-                    skipSimpleDataType(context);
-                }
-            }
+            const auto parameterCount = signature.parameter_count;
 
             const auto functionBits = reader.read_byte();
 
@@ -501,14 +516,36 @@ namespace asbc::format {
             functionVisitor(simple_function_summary{
                 .index = functionIndex,
                 .record_offset = recordOffset,
-                .name = name,
-                .name_space = nameSpace,
-                .return_type = returnType,
+                .name = signature.name,
+                .name_space = signature.name_space,
+                .return_type = signature.return_type,
                 .parameter_count = parameterCount,
+                .function_type = signature.function_type,
                 .instruction_count = instructionCount,
                 .byte_code_word_count = wordCount,
             });
         }
+    }
+
+    template<
+        auto const& Asbc,
+        class FunctionVisitor,
+        class ParameterTypeVisitor = ignore_visit_event,
+        class ParameterModifierVisitor = ignore_visit_event,
+        class InstructionVisitor = ignore_visit_event>
+    constexpr void visitFunctions(
+        FunctionVisitor functionVisitor,
+        ParameterTypeVisitor parameterTypeVisitor = {},
+        ParameterModifierVisitor parameterModifierVisitor = {},
+        InstructionVisitor instructionVisitor = {})
+    {
+        constexpr std::size_t byteCount = std::size(Asbc);
+        simple_function_decoding_context<byteCount> context{
+            std::span<const unsigned char>{Asbc, byteCount}
+        };
+        const auto module = read_simple_module_header(context);
+        visitScriptFunctions<byteCount>(context, module, functionVisitor,
+            parameterTypeVisitor, parameterModifierVisitor, instructionVisitor);
     }
 
     constexpr std::uint32_t packOpcodeWord(

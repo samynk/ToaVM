@@ -1,6 +1,7 @@
 #pragma once
 #include <asbc/frame.hpp>
 #include <asbc/host_api.hpp>
+#include <asbc/host_call.hpp>
 #include <tuple>
 #include <math.h>
 
@@ -42,24 +43,12 @@ namespace asbc{
                 frame.valueRegister
             );
         }else if constexpr (Op == asBC_PshV4) {
-            static_assert(arg0 != 0, "Argument 0 must be non-zero for asBC_PshV4");
             frame.pushDWord(
                 frame.template get<dword, arg0>()
             );
         }else if constexpr (Op == asBC_CALLSYS) {
-            const float argument =
-                std::bit_cast<float>(frame.popDWord());
-
-            constexpr auto usedFunctionIndex = (arg0 << 16) + arg1;
-            
-            using HostApi = typename FrameType::host_api_type;
-            constexpr auto sqrtFunction = HostApi::template get<"sqrt">();
-            float result = sqrtFunction(argument);
-
-            //std::cout << "Result: " << result << std::endl; 
-            frame.setReturnValue(
-                std::bit_cast<dword>(result)
-            );
+            constexpr auto usedFunctionIndex = joinOperandWords(arg0, arg1);
+            detail::callHostFunction<FrameType, usedFunctionIndex>(frame);
         }
         else if constexpr (Op == asBC_RET) {
             frame.argumentWordsToPop =
