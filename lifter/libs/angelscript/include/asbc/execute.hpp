@@ -42,6 +42,9 @@ namespace asbc{
             frame.template set<arg0>(
                 frame.valueRegister
             );
+        }else if constexpr (Op == asBC_SetV4){
+            constexpr dword value = joinOperandWords(arg1, arg2);
+            frame.template set<arg0>(value);
         }else if constexpr (Op == asBC_PshV4) {
             frame.pushDWord(
                 frame.template get<dword, arg0>()

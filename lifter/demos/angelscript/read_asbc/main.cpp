@@ -121,7 +121,11 @@ void print_arguments(
     case asBCTYPE_QW_ARG:
         std::cout << " arg=" << asBC_QWORDARG(instruction);
         break;
-
+    case asBCTYPE_wW_DW_ARG:
+        std::cout
+            << " dst=" << asBC_SWORDARG0(instruction)
+            << " value=" << asBC_DWORDARG(instruction);
+        break;    
     default:
         std::cout << " <operand format "
                   << static_cast<int>(type)

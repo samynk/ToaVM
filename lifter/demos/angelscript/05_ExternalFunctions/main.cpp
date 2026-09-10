@@ -5,6 +5,7 @@
 #include "asbc/instruction.hpp"
 #include "asbc/transform.hpp"
 #include "asbc/function.hpp"
+#include "asbc/frame.hpp"
 #include <asbc/format/module_reader.hpp>
 #include <asbc/format/function_reader.hpp>
 #include <asbc/format/used_function_reader.hpp>
@@ -59,11 +60,10 @@ inline constexpr auto demo_module =
     asbc::format::readSimpleModule<demo_asbc>();
 
 static_assert(!demo_module.debug_info_stripped);
-static_assert(demo_module.function_count == 4);
+static_assert(demo_module.function_count > 4);
 static_assert(std::get<0>(demo_module.used_functions).signature.name.equals("sqrt"));
 
-using Environment =
-    asbc::execution_environment<demo_module, HostApi>;
+using Environment = asbc::execution_environment<demo_module, HostApi>;
 
 int main()
 {
@@ -85,6 +85,16 @@ int main()
 
     std::cout << "Angle : " << angle << "\n";
     std::cout << "Angle check : " << std::atan2(2.87f, 3.23f) << "\n";
+
+    // sum function
+    int sum =
+        asbc::invoke<
+            asbc::standalone_environment,
+            asbc::format::decodedFunctionByteCode<demo_asbc, 4>,
+            std::int32_t
+        >();
+
+        std::cout << "Sum : " << sum << "\n";
 
     return 0;
 }

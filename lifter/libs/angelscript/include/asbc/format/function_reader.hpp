@@ -399,7 +399,12 @@ namespace asbc::format {
                         .arg2 = readEncodedWord(reader)
                     };
                     break;
-
+                case asBC_SetV4:
+                    instruction.operands.arg0 = readEncodedWord(reader);
+                    storeDWordOperand(
+                        instruction.operands,
+                        reader.readEncodedDWord());
+                    break;
                 default:
                     throw "Unsupported opcode in simple ASBC reader";
                 }

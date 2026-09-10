@@ -55,7 +55,7 @@ namespace asbc{
 
 
         template<typename ValueType,index Index>
-        constexpr decltype(auto) get()
+        constexpr ValueType get()
         {
             if constexpr (Index > 0) {
                 return std::bit_cast<ValueType>(locals[Index - 1]);

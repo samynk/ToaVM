@@ -19,6 +19,13 @@ float angle(float y, float x)
     return atan2(y,x);
 }
 
+int sum()
+{
+    int op1 = 2;
+    int op2 = 5;
+    return op1 + op2;
+}
+
 /*
 int run_demo()
 {

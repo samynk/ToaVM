@@ -80,6 +80,7 @@ namespace asbc {
         case asBC_MULf:
         case asBC_ADDf:
         case asBC_CALLSYS:
+        case asBC_SetV4:
             return 2;
 
         default:
@@ -101,6 +102,7 @@ namespace asbc {
         case asBC_ADDi:
         case asBC_MULf:
         case asBC_ADDf:
+        case asBC_SetV4:
         {
             
             return {
