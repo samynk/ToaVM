@@ -1,6 +1,7 @@
 add_library(asbc STATIC
     "include/asbc/frame.hpp"
     "include/asbc/block.hpp"
+    "include/asbc/control_flow.hpp"
     "include/asbc/function.hpp"
     "include/asbc/transform.hpp"
     "include/asbc/instruction.hpp"

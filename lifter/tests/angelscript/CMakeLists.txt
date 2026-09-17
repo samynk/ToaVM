@@ -28,6 +28,22 @@ add_custom_command(
 add_custom_target(callsys_fixture DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/callsys_fixture.hpp")
 
 enable_testing()
+add_executable(generate_loop_fixture generate_loop_fixture.cpp)
+target_link_libraries(generate_loop_fixture PRIVATE angelscript)
+add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/loop_fixture.hpp"
+    COMMAND generate_loop_fixture "${CMAKE_CURRENT_BINARY_DIR}/loop_fixture.hpp"
+    DEPENDS generate_loop_fixture
+    VERBATIM
+)
+add_custom_target(loop_fixture DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/loop_fixture.hpp")
+
+add_executable(loop_tests loop_tests.cpp)
+add_dependencies(loop_tests loop_fixture)
+target_include_directories(loop_tests PRIVATE
+    "${asbc_include}" "${as_include}" "${CMAKE_CURRENT_BINARY_DIR}")
+add_test(NAME loops COMMAND loop_tests)
+
 add_executable(callsys_tests callsys_tests.cpp)
 add_dependencies(callsys_tests callsys_fixture)
 target_include_directories(callsys_tests PRIVATE
@@ -35,7 +51,7 @@ target_include_directories(callsys_tests PRIVATE
 add_test(NAME callsys COMMAND callsys_tests)
 
 # This additional target exercises the real reflection-generated block.
-option(TOAVM_TEST_REFLECTION "Also run CALLSYS through asbc::invoke (GCC 16+)" OFF)
+option(TOAVM_TEST_REFLECTION "Also run CALLSYS and loops through asbc::invoke (GCC 16+)" OFF)
 if(TOAVM_TEST_REFLECTION)
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16)
         message(FATAL_ERROR "Reflection tests require GCC 16+ with -freflection")
@@ -48,9 +64,39 @@ if(TOAVM_TEST_REFLECTION)
     target_include_directories(callsys_reflection_tests PRIVATE
         "${asbc_include}" "${as_include}" "${CMAKE_CURRENT_BINARY_DIR}")
     add_test(NAME callsys_reflection COMMAND callsys_reflection_tests)
+
+    add_executable(loop_reflection_tests loop_tests.cpp)
+    add_dependencies(loop_reflection_tests loop_fixture)
+    set_target_properties(loop_reflection_tests PROPERTIES CXX_STANDARD 26)
+    target_compile_options(loop_reflection_tests PRIVATE -freflection)
+    target_compile_definitions(loop_reflection_tests PRIVATE TOAVM_TEST_REFLECTION)
+    target_include_directories(loop_reflection_tests PRIVATE
+        "${asbc_include}" "${as_include}" "${CMAKE_CURRENT_BINARY_DIR}")
+    add_test(NAME loops_reflection COMMAND loop_reflection_tests)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(loop_diagnostics
+        "Instruction extends beyond bytecode array"
+        "AngelScript jump target is out of range"
+        "AngelScript jump target is out of range"
+        "AngelScript jump target is not an instruction boundary"
+        "Unsupported AngelScript control flow"
+        "Serialized AngelScript jump target is out of range"
+        "Unsupported AngelScript opcode")
+    foreach(case RANGE 1 7)
+        math(EXPR diagnostic_index "${case} - 1")
+        list(GET loop_diagnostics ${diagnostic_index} diagnostic)
+        add_test(NAME loops_compile_failure_${case}
+            COMMAND "${CMAKE_COMMAND}"
+                "-DCXX=${CMAKE_CXX_COMPILER}" "-DCASE=${case}"
+                "-DASBC_INCLUDE=${asbc_include}" "-DAS_INCLUDE=${as_include}"
+                "-DGENERATED_INCLUDE=${CMAKE_CURRENT_BINARY_DIR}"
+                "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/loop_compile_fail.cpp"
+                "-DDIAGNOSTIC=${diagnostic}"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/expect_compile_failure.cmake")
+    endforeach()
+
     set(diagnostics
         "Host function is not registered"
         "Host function name is registered more than once"

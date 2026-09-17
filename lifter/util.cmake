@@ -32,6 +32,8 @@ function(ConfigureASProject ProjectName PROJECT_FOLDER )
             PDB_OUTPUT_DIRECTORY     "${AS_BIN_DIR}"
            
     )
+
+   
 endfunction()
 
 function(ConfigureASReflectionProject ProjectName PROJECT_FOLDER)

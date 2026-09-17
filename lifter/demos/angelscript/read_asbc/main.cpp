@@ -1,6 +1,7 @@
 #include <angelscript.h>
 
 #include "asbc/host_api.hpp"
+#include "asbc/instruction.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -76,7 +77,9 @@ private:
 
 void print_arguments(
     const asDWORD* instruction,
-    asEBCType type
+    asEBCType type,
+    asEBCInstr opcode,
+    asUINT pc
 )
 {
     switch (type) {
@@ -115,11 +118,27 @@ void print_arguments(
         break;
 
     case asBCTYPE_DW_ARG:
-        std::cout << " arg=" << asBC_DWORDARG(instruction);
+        if (asbc::isJump(opcode)) {
+            const auto displacement = std::bit_cast<std::int32_t>(asBC_DWORDARG(instruction));
+            std::cout << " arg=" << displacement
+                      << " target=" << static_cast<std::int64_t>(pc) + 2 + displacement;
+        } else {
+            std::cout << " arg=" << asBC_DWORDARG(instruction);
+        }
         break;
 
     case asBCTYPE_QW_ARG:
         std::cout << " arg=" << asBC_QWORDARG(instruction);
+        break;
+    case asBCTYPE_rW_DW_ARG:
+        std::cout << " src=" << asBC_SWORDARG0(instruction) << " value=";
+        if (opcode == asBC_CMPIi) {
+            std::cout << std::bit_cast<std::int32_t>(asBC_DWORDARG(instruction));
+        } else if (opcode == asBC_CMPIf) {
+            std::cout << std::bit_cast<float>(asBC_DWORDARG(instruction));
+        } else {
+            std::cout << asBC_DWORDARG(instruction);
+        }
         break;
     case asBCTYPE_wW_DW_ARG:
         std::cout
@@ -252,7 +271,7 @@ int main(int argc, char** argv)
 
             std::cout << pc
                     << ": " << info.name << "[ " << instruction_size << " DWORDs ]";
-            print_arguments(instruction, info.type);
+            print_arguments(instruction, info.type, opcode, pc);
             print_instruction_annotation(*engine, opcode, instruction);
             std::cout << '\n';
             // std::cout << " [" << instruction_size << " DWORDs]\n";

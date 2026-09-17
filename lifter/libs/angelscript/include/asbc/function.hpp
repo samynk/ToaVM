@@ -3,14 +3,14 @@
 
 namespace asbc{
     template<
-        typename HostApi,
+        typename Env,
         auto const& Bytecode,
         typename ReturnType,
         typename... Parameters
     >
     constexpr ReturnType invoke(Parameters... parameters)
     {
-        using FrameType = Frame<HostApi, ReturnType,Parameters...>;
+        using FrameType = Frame<Env, ReturnType, Parameters...>;
         FrameType frame{parameters...};
 
         constexpr std::meta::info program =

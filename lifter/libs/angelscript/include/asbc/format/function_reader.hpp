@@ -377,11 +377,19 @@ namespace asbc::format {
                 case asBC_CpyVtoR4:
                 case asBC_CpyRtoV4:
                 case asBC_PshV4:
+                case asBC_IncVi:
                 case asBC_RET:
                     instruction.operands.arg0 =
                         readEncodedWord(reader);
                     break;
                 case asBC_CALLSYS:
+                case asBC_JMP:
+                case asBC_JZ:
+                case asBC_JNZ:
+                case asBC_JS:
+                case asBC_JNS:
+                case asBC_JP:
+                case asBC_JNP:
                     storeDWordOperand(
                         instruction.operands,
                         reader.readEncodedDWord()
@@ -399,7 +407,14 @@ namespace asbc::format {
                         .arg2 = readEncodedWord(reader)
                     };
                     break;
+                case asBC_CMPi:
+                    instruction.operands = {
+                        .arg0 = readEncodedWord(reader),
+                        .arg1 = readEncodedWord(reader)
+                    };
+                    break;
                 case asBC_SetV4:
+                case asBC_CMPIi:
                     instruction.operands.arg0 = readEncodedWord(reader);
                     storeDWordOperand(
                         instruction.operands,
@@ -633,6 +648,30 @@ namespace asbc::format {
         return result;
     }
 
+    // SaveByteCode stores jump distances in instructions, not DWORDs.
+    // Restore them only after all instruction boundaries are known.
+    constexpr void restoreJumpOffsets(std::span<std::uint32_t> program)
+    {
+        const auto offsets = instructionOffsets(program);
+        for (std::size_t i = 0; i < offsets.size(); ++i) {
+            const auto pc = offsets[i];
+            if (!isJump(decodeOpcode(program[pc]))) continue;
+            const auto target = static_cast<std::int64_t>(i) + 1 +
+                std::bit_cast<std::int32_t>(program[pc + 1]);
+            if (target < 0 || target >= static_cast<std::int64_t>(offsets.size())) {
+                throw "Serialized AngelScript jump target is out of range";
+            }
+            const auto distance = static_cast<std::int64_t>(offsets[target]) -
+                static_cast<std::int64_t>(pc + 2);
+            if (distance < std::numeric_limits<std::int32_t>::min() ||
+                distance > std::numeric_limits<std::int32_t>::max()) {
+                throw "AngelScript jump displacement is out of range";
+            }
+            program[pc + 1] = std::bit_cast<std::uint32_t>(
+                static_cast<std::int32_t>(distance));
+        }
+    }
+
     template<auto const& Asbc, std::size_t FunctionIndex>
     consteval auto readFunctionByteCode()
     {
@@ -668,6 +707,7 @@ namespace asbc::format {
             throw "Decoded AngelScript bytecode size is inconsistent";
         }
 
+        restoreJumpOffsets(result);
         return result;
     }
 

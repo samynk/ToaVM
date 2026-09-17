@@ -35,17 +35,23 @@ set(JBC_RES_DIR     "${JBC_RUNTIME_DIR}/resources")
 include(util.cmake)
 
 
-# Set the C++ Standard to 23
+# Set the C++ Standard to 26
 set(CMAKE_CXX_STANDARD 26)
 
 # Ensure the standard is required (build fails if compiler is too old)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Disable compiler-specific extensions (enforces "pure" C++23)
+# Disable compiler-specific extensions (enforces "pure" C++26)
 # Set to ON if you need specific GNU or MSVC extras
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
+ if(MSVC)
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
+else()
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+endif()
 
 # Java bytecode directories
 add_subdirectory(resources/jbc)
@@ -70,3 +76,4 @@ add_subdirectory(demos/angelscript/02_SimpleFunctionReflection)
 add_subdirectory(demos/angelscript/03_AdvancedFunction)
 add_subdirectory(demos/angelscript/04_ParseBytecodeConsteval)
 add_subdirectory(demos/angelscript/05_ExternalFunctions)
+add_subdirectory(demos/angelscript/06_Loops)

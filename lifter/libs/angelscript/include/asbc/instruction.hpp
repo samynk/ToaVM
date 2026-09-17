@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <bit>
 #include <vector>
 #include <span>
 #include <limits>
@@ -72,6 +73,7 @@ namespace asbc {
         case asBC_CpyVtoR4:
         case asBC_CpyRtoV4:
         case asBC_PshV4:
+        case asBC_IncVi:
         case asBC_RET:
             return 1;
 
@@ -81,11 +83,32 @@ namespace asbc {
         case asBC_ADDf:
         case asBC_CALLSYS:
         case asBC_SetV4:
+        case asBC_CMPi:
+        case asBC_CMPIi:
+        case asBC_JMP:
+        case asBC_JZ:
+        case asBC_JNZ:
+        case asBC_JS:
+        case asBC_JNS:
+        case asBC_JP:
+        case asBC_JNP:
             return 2;
 
         default:
-            return 1;
+            throw "Unsupported AngelScript opcode";
         }
+    }
+
+    constexpr bool isConditionalJump(asEBCInstr opcode)
+    {
+        return opcode == asBC_JZ || opcode == asBC_JNZ ||
+            opcode == asBC_JS || opcode == asBC_JNS ||
+            opcode == asBC_JP || opcode == asBC_JNP;
+    }
+
+    constexpr bool isJump(asEBCInstr opcode)
+    {
+        return opcode == asBC_JMP || isConditionalJump(opcode);
     }
 
     template<auto const& Program>
@@ -103,6 +126,8 @@ namespace asbc {
         case asBC_MULf:
         case asBC_ADDf:
         case asBC_SetV4:
+        case asBC_CMPi:
+        case asBC_CMPIi:
         {
             
             return {
@@ -114,14 +139,22 @@ namespace asbc {
         case asBC_CpyVtoR4:
         case asBC_CpyRtoV4:
         case asBC_PshV4:
+        case asBC_IncVi:
         {
             return {
                 .arg0 = signedHighWord(Program[pc])
             };
         }
         case asBC_CALLSYS:
+        case asBC_JMP:
+        case asBC_JZ:
+        case asBC_JNZ:
+        case asBC_JS:
+        case asBC_JNS:
+        case asBC_JP:
+        case asBC_JNP:
         {
-            // function id is in dword
+            // DWORD operand: used-function index or signed jump displacement.
             return {
                 .arg0 = signedLowWord(Program[pc + 1]),
                 .arg1 = signedHighWord(Program[pc + 1])
@@ -133,31 +166,53 @@ namespace asbc {
             };
         }
         default:{
-            return{};
+            throw "Unsupported AngelScript opcode";
         }
         }
     }
 
-    template<auto const& Program>
-    consteval std::vector<std::size_t> createInstructionOffsets()
+    constexpr std::vector<std::size_t> instructionOffsets(
+        std::span<const std::uint32_t> program)
     {
         std::vector<std::size_t> offsets;
 
         std::size_t pc = 0;
 
-        while (pc < Program.size()) {
+        while (pc < program.size()) {
             offsets.push_back(pc);
 
             const asEBCInstr opcode =
-                decodeOpcode(Program[pc]);
+                decodeOpcode(program[pc]);
 
             pc += instructionSize(opcode);
         }
 
-        if (pc != Program.size()) {
+        if (pc != program.size()) {
             throw "Instruction extends beyond bytecode array";
         }
 
         return offsets;
+    }
+
+    template<auto const& Program>
+    consteval std::vector<std::size_t> createInstructionOffsets()
+    {
+        return instructionOffsets(Program);
+    }
+
+    // In memory, a jump is relative to the next instruction, in DWORDs.
+    constexpr std::size_t jumpTarget(
+        std::span<const std::uint32_t> program, std::size_t pc)
+    {
+        if (pc >= program.size() || !isJump(decodeOpcode(program[pc])) ||
+            program.size() - pc < 2) {
+            throw "Expected a complete AngelScript jump instruction";
+        }
+        const auto target = static_cast<std::int64_t>(pc) + 2 +
+            std::bit_cast<std::int32_t>(program[pc + 1]);
+        if (target < 0 || target >= static_cast<std::int64_t>(program.size())) {
+            throw "AngelScript jump target is out of range";
+        }
+        return static_cast<std::size_t>(target);
     }
 } // namespace asbc

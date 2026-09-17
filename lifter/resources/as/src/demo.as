@@ -26,6 +26,16 @@ int sum()
     return op1 + op2;
 }
 
+int loopTest()
+{
+    int sum = 0;
+    for (int i = 0; i < 10; ++i)
+    {
+        sum += i;
+    }
+    return sum;
+}
+
 /*
 int run_demo()
 {

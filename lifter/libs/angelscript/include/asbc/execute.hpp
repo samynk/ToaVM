@@ -8,7 +8,7 @@
 namespace asbc{
     template<
         typename FrameType,
-        asEBCInstr Op,
+        asEBCIlsnstr Op,
         std::int16_t arg0 = 0,
         std::int16_t arg1 = 0,
         std::int16_t arg2 = 0
@@ -18,6 +18,22 @@ namespace asbc{
         if constexpr (Op == asBC_SUSPEND) {
             // AngelScript uses this for line callbacks and suspension.
             // The first AOT implementation does not support suspension.
+        }
+        else if constexpr (Op == asBC_IncVi) {
+            frame.template set<arg0>(frame.template get<dword, arg0>() + dword{1});
+        }
+        else if constexpr (Op == asBC_CMPIi || Op == asBC_CMPi) {
+            const auto lhs = frame.template get<std::int32_t, arg0>();
+            const auto rhs = [&] {
+                if constexpr (Op == asBC_CMPIi) {
+                    return std::bit_cast<std::int32_t>(joinOperandWords(arg1, arg2));
+                } else {
+                    return frame.template get<std::int32_t, arg1>();
+                }
+            }();
+            // Compare directly: subtraction could overflow for extreme operands.
+            const std::int32_t result = lhs < rhs ? -1 : lhs > rhs ? 1 : 0;
+            frame.valueRegister = std::bit_cast<dword>(result);
         }
         else if constexpr (Op == asBC_MULi) {
             frame.template set<arg0>(
